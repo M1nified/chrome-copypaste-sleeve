@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Copy Paste Sleeve Options</title>
+    <script src="../js/idb.js"></script>
+    <script src="./options.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .btn-text-delete,
+        .btn-text-edit {
+            cursor: pointer;
+            color: #26a69a;
+        }
+
+        .editable {
+            cursor: pointer;
+            outline: none;
+            display: block;
+            margin-right: 6em !important;
+        }
+        .editable:focus{
+            border-bottom: solid 1px;
+        }
+        .td-name.editable:empty:not(:focus):after{
+            content: "No title yet...";
+            pointer-events: none;
+        }
+
+        .form-new-text {
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+    <template class="tmpl-txt-row">
+        <li class="collection-item avatar" data-key="">
+            <i class="material-icons circle">content_paste</i>
+            <span class="title td-name editable" contenteditable="true" aria-placeholder="x"></span>
+            <p class="td-text editable" contenteditable="true"></p>
+            <p class="secondary-content">
+                <a href="#!" class="btn-text-edit"><i class="material-icons" title="Save changes">save</i></a>
+                <a href="#!" class="btn-text-delete"><i class="material-icons" title="Delete">delete_forever</i></a>
+            </p>
+        </li>
+    </template>
+    <div class="container">
+        <h2>Add to Sleeve</h2>
+        <form class="form-new-text">
+            <input type="text" placeholder="Title (optional)" class="validate new-name" />
+            <input type="text" id="new-text" placeholder="Text to paste (required)" class="validate new-text"
+                required />
+            <button type="submit" class="input-field col s2 waves-light btn">Add</button>
+        </form>
+        <h2>In your Sleeve</h2>
+        <ul class="collection txt-rows"></ul>
+    </div>
+</body>
+
+</html>
