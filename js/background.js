@@ -12,16 +12,17 @@ sleeveTextObject {
 chrome.runtime.onInstalled.addListener(async () => {
     await populateContextMenus();
 
-    chrome.contextMenus.onClicked.addListener(
-        (info, tab) => {
-            onContextMenuClick(info, tab);
-        }
-    );
 
     setRecordsListener(() => {
         refreshContextMenus();
     });
-})
+});
+
+chrome.contextMenus.onClicked.addListener(
+    (info, tab) => {
+        onContextMenuClick(info, tab);
+    }
+);
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     console.log(message)

@@ -2,17 +2,21 @@ const addRecordToSleeve = async (record, info, tab) => {
     const { text, name } = record;
     if (!text || typeof text !== 'string') return { error: true };
     return new Promise(async (resolve, reject) => {
-        const records = await getAllTexts();
+        const key = new Date().getTime().toString() + Math.random().toString().slice(2);
         const record = {
             text,
             name,
-        }
-        records.push(record);
+            key,
+        };
         chrome.storage.sync.set({
-            records,
+            [key]: record,
         }, () => {
-            // msgTextsUpdated();
-            resolve();
+            if (!chrome.runtime.lastError) {
+                resolve();
+            } else {
+                console.error(chrome.runtime.lastError.message);
+                reject(chrome.runtime.lastError);
+            }
         });
     });
 
@@ -23,24 +27,35 @@ const addTextToSleeve = async (text, info, tab) => {
 }
 
 const getAllTexts = () => new Promise(async (resolve, reject) => {
-    chrome.storage.sync.get('records', ({ records }) => {
-        const recordsReady = (Array.isArray(records) ? records : []).map((r, i) => ({ ...r, key: i }));
-        resolve(recordsReady);
+    chrome.storage.sync.get(recordsObj => {
+        if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+            return;
+        }
+        const records = Object.keys(recordsObj).map(key => recordsObj[key]);
+        resolve(records);
     })
 })
 
-const getText = key => async () => {
-    const records = await getAllTexts();
-    return (records[key]);
-}
+const getText = key => new Promise(resolve => {
+    chrome.storage.sync.get(key, ({ record }) => {
+        if (chrome.runtime.lastError || !record) {
+            reject(chrome.runtime.lastError || 'No such record!');
+        } else {
+            resolve(record);
+        }
+    })
+})
 
 const deleteText = key => new Promise(async (resolve, reject) => {
-    const records = await getAllTexts();
-    records.splice(key, 1);
-    chrome.storage.sync.set({ records }, () => {
-        // msgTextsUpdated();
-        resolve();
-    });
+    chrome.storage.sync.remove(key, () => {
+        if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError.massage);
+            reject(chrome.runtime.lastError);
+        } else {
+            resolve();
+        }
+    })
 })
 
 const updateRecord = (record) => {
@@ -50,13 +65,17 @@ const updateRecord = (record) => {
         const record = {
             text,
             name,
-        }
-        const records = await getAllTexts();
-        records[key] = record;
-        chrome.storage.sync.set({ records }, () => {
-            // msgTextsUpdated();
+            key,
+        };
+        chrome.storage.sync.set({
+            [key]: record,
+        }, () => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+                return;
+            }
             resolve();
-        });
+        })
     });
 }
 
@@ -72,8 +91,6 @@ const msgTextsUpdated = () => {
 const setRecordsListener = (action) => {
     chrome.storage.onChanged.addListener((changes, areaName) => {
         if (areaName !== 'sync') return;
-        if (changes.records) {
-            action();
-        }
+        action();
     })
 }

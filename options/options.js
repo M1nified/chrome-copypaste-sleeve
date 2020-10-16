@@ -11,8 +11,8 @@ window.addEventListener('load', async () => {
             const row = txtRowTemplateElement.cloneNode(true);
             const btnDelete = row.querySelector('.btn-text-delete');
             const btnSave = row.querySelector('.btn-text-edit');
-            textBox = row.querySelector('.td-text');
-            nameBox = row.querySelector('.td-name');
+            const textBox = row.querySelector('.td-text');
+            const nameBox = row.querySelector('.td-name');
 
             btnDelete.addEventListener('click', async event => {
                 event.preventDefault();
