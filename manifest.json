@@ -1,9 +1,9 @@
 {
     "manifest_version": 2,
-    "name": "CopyPaste Sleeve",
-    "version": "0.1",
+    "name": "Store&Paste",
+    "version": "1.0",
     "default_locale": "en",
-    "description": "Stores text to be pasted in the future.",
+    "description": "Stores multiple texts to be pasted in the future.",
     "background": {
         "scripts": [
             "js/idb.js",
@@ -13,7 +13,8 @@
     },
     "permissions": [
         "contextMenus",
-        "activeTab"
+        "activeTab",
+        "storage"
     ],
     "options_page": "options/options.html"
 }

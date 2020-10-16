@@ -16,11 +16,7 @@ window.addEventListener('load', async () => {
 
             btnDelete.addEventListener('click', async event => {
                 event.preventDefault();
-                const removeResult = await deleteText(key);
-                if (removeResult.error) {
-                    console.error('Failed to remove.', removeResult.error);
-                    return;
-                }
+                await deleteText(key);
                 tbody.removeChild(row);
             });
 
@@ -69,13 +65,9 @@ window.addEventListener('load', async () => {
         );
     });
 
-    chrome.runtime.onMessage.addListener(async (message, sender) => {
-        const { command } = message;
-        if (chrome.runtime.id !== sender.id) return;
-        if (command === 'texts_updated') {
-            reloadTextsList();
-        }
-    });
+    setRecordsListener(() => {
+        reloadTextsList();
+    })
 
     reloadTextsList();
 

@@ -17,6 +17,10 @@ chrome.runtime.onInstalled.addListener(async () => {
             onContextMenuClick(info, tab);
         }
     );
+
+    setRecordsListener(() => {
+        refreshContextMenus();
+    });
 })
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
@@ -29,32 +33,25 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.command === 'update_record') {
         const result = await msgUpdateRecord(message.record, sender, sendResponse);
         sendResponse(result);
-
     }
 });
 
 const msgAddRecord = async (record, sender, sendResponse) => {
     const { text, name } = record;
-    const addResult = await addRecordToSleeve({
+    await addRecordToSleeve({
         text,
         name,
     });
-    if (addResult.error) {
-        return { error: addResult.error };
-    }
     return true;
 }
 
 const msgUpdateRecord = async (record, sender, sendResponse) => {
     const { text, name, key } = record;
-    const addResult = await updateRecord({
+    await updateRecord({
         text,
         name,
         key,
     });
-    if (addResult.error) {
-        return { error: addResult.error };
-    }
     return true;
 }
 

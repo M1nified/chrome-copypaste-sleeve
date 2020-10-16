@@ -2,20 +2,18 @@ const addRecordToSleeve = async (record, info, tab) => {
     const { text, name } = record;
     if (!text || typeof text !== 'string') return { error: true };
     return new Promise(async (resolve, reject) => {
-        const idb = await openIDB();
-        const data = {
+        const records = await getAllTexts();
+        const record = {
             text,
             name,
         }
-        const request = idb.transaction(['texts'], 'readwrite')
-            .objectStore('texts')
-            .put(data);
-        request.onerror = event => reject({ error: event });
-        request.onsuccess = async event => {
-            await refreshContextMenus();
-            msgTextsUpdated();
-            resolve(true);
-        };
+        records.push(record);
+        chrome.storage.sync.set({
+            records,
+        }, () => {
+            // msgTextsUpdated();
+            resolve();
+        });
     });
 
 }
@@ -25,87 +23,41 @@ const addTextToSleeve = async (text, info, tab) => {
 }
 
 const getAllTexts = () => new Promise(async (resolve, reject) => {
-    const idb = await openIDB();
-    const request = idb.transaction(['texts'])
-        .objectStore('texts')
-        .openCursor();
-    const texts = [];
-    request.onsuccess = event => {
-        const cursor = event.target.result;
-        if (cursor) {
-            texts.push({
-                ...cursor.value,
-                key: cursor.key,
-            });
-            cursor.continue();
-        } else {
-            resolve(texts);
-        }
-    };
-    request.onerror = event => reject(event);
+    chrome.storage.sync.get('records', ({ records }) => {
+        const recordsReady = (Array.isArray(records) ? records : []).map((r, i) => ({ ...r, key: i }));
+        resolve(recordsReady);
+    })
 })
 
-const getText = key => new Promise(async (resolve, reject) => {
-    const idb = await openIDB();
-    const request = idb.transaction(['texts'])
-        .objectStore('texts')
-        .get(key);
-    request.onsuccess = event => {
-        const text = {
-            ...event.target.result,
-            key,
-        };
-        resolve(text);
-    };
-    request.onerror = event => reject(event);
-})
+const getText = key => async () => {
+    const records = await getAllTexts();
+    return (records[key]);
+}
 
 const deleteText = key => new Promise(async (resolve, reject) => {
-    const idb = await openIDB();
-    const request = idb.transaction(['texts'], 'readwrite')
-        .objectStore('texts')
-        .delete(key);
-    request.onsuccess = event => {
-        msgTextsUpdated();
-        resolve(true);
-    };
-    request.onerror = event => reject({ error: event });
+    const records = await getAllTexts();
+    records.splice(key, 1);
+    chrome.storage.sync.set({ records }, () => {
+        // msgTextsUpdated();
+        resolve();
+    });
 })
 
 const updateRecord = (record) => {
     const { text, name, key } = record;
     if (!key || !text || typeof text !== 'string') return { error: true };
     return new Promise(async (resolve, reject) => {
-        const idb = await openIDB();
-        const data = {
+        const record = {
             text,
             name,
-            key,
         }
-        const request = idb.transaction(['texts'], 'readwrite')
-            .objectStore('texts')
-            .put(data);
-        request.onerror = event => reject({ error: event });
-        request.onsuccess = async event => {
-            await refreshContextMenus();
-            msgTextsUpdated();
-            resolve(true);
-        };
+        const records = await getAllTexts();
+        records[key] = record;
+        chrome.storage.sync.set({ records }, () => {
+            // msgTextsUpdated();
+            resolve();
+        });
     });
-}
-
-const openIDB = async () => {
-    return new Promise((resolve, reject) => {
-        const request = window.indexedDB.open('Sleeve', 1);
-        request.onerror = event => reject(event);
-        request.onsuccess = event => resolve(event.target.result);
-        request.onupgradeneeded = event => {
-            const db = event.target.result;
-            db.onerror = event => reject(event);
-            const textStore = db.createObjectStore('texts', { keyPath: 'key', autoIncrement: true });
-            textStore.createIndex('text', 'text', { unique: false });
-        }
-    })
 }
 
 const msgTextsUpdated = () => {
@@ -115,4 +67,13 @@ const msgTextsUpdated = () => {
             command: 'texts_updated',
         }
     );
+}
+
+const setRecordsListener = (action) => {
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName !== 'sync') return;
+        if (changes.records) {
+            action();
+        }
+    })
 }
